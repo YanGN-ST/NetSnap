@@ -1,4 +1,4 @@
-// HarSnap background service worker
+// NetSnap background service worker
 // 用 Chrome DevTools Protocol (chrome.debugger) 捕获网络请求，组装 HAR + 提取 Cookie
 import { HarBuilder } from './har-builder.js';
 
@@ -111,7 +111,7 @@ async function downloadHar(indices) {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   await chrome.downloads.download({
     url: dataUrl,
-    filename: `harsnap-${stamp}.har`,
+    filename: `netsnap-${stamp}.har`,
     saveAs: true,
   });
   return { ok: true };
@@ -125,7 +125,7 @@ async function downloadCookies() {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   await chrome.downloads.download({
     url: dataUrl,
-    filename: `harsnap-cookies-${stamp}.txt`,
+    filename: `netsnap-cookies-${stamp}.txt`,
     saveAs: true,
   });
   return { ok: true };
@@ -139,7 +139,7 @@ async function downloadTokens() {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   await chrome.downloads.download({
     url: dataUrl,
-    filename: `harsnap-tokens-${stamp}.txt`,
+    filename: `netsnap-tokens-${stamp}.txt`,
     saveAs: true,
   });
   return { ok: true };
@@ -169,7 +169,7 @@ async function downloadSummary(format = 'csv') {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   await chrome.downloads.download({
     url: dataUrl,
-    filename: `harsnap-summary-${stamp}.${ext}`,
+    filename: `netsnap-summary-${stamp}.${ext}`,
     saveAs: true,
   });
   return { ok: true };

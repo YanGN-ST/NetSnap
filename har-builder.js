@@ -108,7 +108,7 @@ export class HarBuilder {
     return {
       log: {
         version: '1.2',
-        creator: { name: 'HarSnap', version: '1.0.0' },
+        creator: { name: 'NetSnap', version: '1.0.0' },
         pages: [],
         entries: [...this.entries.values()],
       },

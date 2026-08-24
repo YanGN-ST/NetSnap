@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "HarSnap",
+  "name": "NetSnap",
   "version": "1.0.0",
   "description": "一键录制浏览器网络请求，导出 HAR 文件并提取 Cookie。无需打开 DevTools。",
   "icons": {

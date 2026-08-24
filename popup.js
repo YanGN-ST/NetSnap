@@ -1,4 +1,4 @@
-// HarSnap popup 交互：多选导出（HAR / Cookie / Token）+ 请求范围 + 请求清单
+// NetSnap popup 交互：多选导出（HAR / Cookie / Token）+ 请求范围 + 请求清单
 const $ = (s) => document.querySelector(s);
 const send = (msg) => chrome.runtime.sendMessage(msg);
 
