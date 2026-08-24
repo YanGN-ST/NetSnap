@@ -1,19 +1,19 @@
 # HarSnap
 
-一键录制浏览器网络请求 → 导出 HAR 文件 + 提取 Cookie。不开 DevTools、不点右键、不手动另存，点两下按钮完成。
+一键录制浏览器网络请求 → 导出 HAR 文件 + 提取 Cookie / Token。不开 DevTools、不点右键、不手动另存，点两下按钮完成。
+
+🔗 **源码**：https://github.com/ygnstudio/HarSnap
+⬇️ **Chrome Web Store**：（待上架）
 
 ## 功能特性
 
-- **一键录制**：点「开始录制」→ 正常登录签到 → 点「停止」，网络请求自动捕获。
-- **不开 DevTools**：走 Chrome DevTools Protocol（chrome.debugger），无需手动 F12、无需勾 Preserve log。
+- **一键录制**：点「开始录制」→ 正常签到 → 点「停止」，网络请求自动捕获，无需开 DevTools。
 - **多选导出**：`HAR` / `Cookie` / `Token` 三项独立勾选，勾啥导啥。
+- **单请求导出**：请求列表可勾选，「仅勾选」模式只导出勾中请求，过滤无关静态资源。
+- **提取 Cookie 与 Token**：Cookie 从请求头 + Set-Cookie 去重；Token 从 `Authorization` 头提取，两种凭证都覆盖。
+- **请求清单摘要**：一键下载 Markdown 表格（方法 + URL + 状态码）。
 - **导出 HAR 1.2**：标准格式，可直接导入 DailyCheckin / Postman / Charles 等工具回放。
-- **单请求导出**：请求列表可勾选，「仅勾选」模式下只导出勾中的请求（精确复现签到 POST，过滤无关静态资源）。
-- **单独提取 Cookie**：从请求 Cookie 头 + 响应 Set-Cookie 自动提取、去重，列表可一键复制。
-- **单独提取 Token**：从 `Authorization` 头提取 Bearer / Basic 等 token，与 Cookie 并列的第二种凭证。
-- **请求清单摘要**：一键下载 Markdown 表格（方法 + URL + 状态码），快速浏览本次录制。
-- **纯本地**：数据不出本机，无遥测、无后端、无外部请求。
-- **零依赖**：原生 JavaScript + MV3，无构建步骤、无 npm 依赖。
+- **纯本地零依赖**：数据不出本机，无遥测、无构建步骤、无 npm 依赖。
 
 ## 快速开始
 
@@ -63,21 +63,9 @@ flowchart LR
     H --> J[复制 / 下载 cookie]
 ```
 
-## 权限说明
+## 详细文档
 
-| 权限 | 用途 |
-|---|---|
-| `debugger` | 通过 CDP 捕获完整网络请求（含响应体） |
-| `downloads` | 下载 HAR / Cookie 文件 |
-| `activeTab` / `tabs` | 定位当前要录制的标签页 |
-| `storage` | 缓存录制结果，popup 与后台共享 |
-
-## 已知边界
-
-- **「正在调试」黄色提示条**是 Chrome 的安全机制，用 `chrome.debugger` 必然出现，无法隐藏。录制时请勿关闭它，否则录制中断。
-- **一个标签页同时只能有一个调试器**：录制时不要同时开着该标签页的 DevTools。
-- **超大响应体**（几百 MB）可能被 CDP 拒绝返回，此时该请求只有 headers/status，无 body。
-- 目前仅支持 Chromium 系浏览器（Chrome / Edge / Brave 等），Firefox 需另做（WebExtensions 差异）。
+- [使用手册](docs/使用手册.md) —— 权限逐项说明、已知边界、FAQ、故障排查
 
 ## License
 
