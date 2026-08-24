@@ -7,7 +7,7 @@
 <body>
   <header>
     <div class="brand">HarSnap</div>
-    <div class="sub">一键录 HAR · 抓 Cookie</div>
+    <div class="sub">一键录 HAR · 抓 Cookie · 抓 Token</div>
   </header>
 
   <section class="status">
@@ -16,35 +16,53 @@
   </section>
 
   <section class="stats">
-    <div class="stat">
-      <span class="num" id="reqCount">0</span>
-      <span class="lbl">请求</span>
-    </div>
-    <div class="stat">
-      <span class="num" id="cookieCount">0</span>
-      <span class="lbl">Cookie</span>
-    </div>
+    <div class="stat"><span class="num" id="reqCount">0</span><span class="lbl">请求</span></div>
+    <div class="stat"><span class="num" id="cookieCount">0</span><span class="lbl">Cookie</span></div>
+    <div class="stat"><span class="num" id="tokenCount">0</span><span class="lbl">Token</span></div>
   </section>
 
   <section class="controls">
     <button id="startBtn" class="primary">● 开始录制</button>
-    <button id="stopBtn" class="danger" hidden>■ 停止并导出</button>
+    <button id="stopBtn" class="danger" hidden>■ 停止</button>
   </section>
 
-  <section class="cookies" id="cookies" hidden>
-    <div class="cookies-head">
-      <span>捕获的 Cookie</span>
-      <button id="copyAll" class="link">复制全部</button>
+  <!-- 结果区：停止后显示 -->
+  <section class="result" id="result" hidden>
+    <div class="export-opts">
+      <span class="opts-title">导出内容</span>
+      <label><input type="checkbox" id="chkHar" checked> HAR</label>
+      <label><input type="checkbox" id="chkCookie" checked> Cookie</label>
+      <label><input type="checkbox" id="chkToken" checked> Token</label>
     </div>
-    <ul id="cookieList"></ul>
+
+    <div class="scope">
+      <span class="opts-title">请求范围</span>
+      <label><input type="radio" name="scope" value="all" checked> 全部</label>
+      <label><input type="radio" name="scope" value="selected"> 仅勾选</label>
+    </div>
+
+    <div class="req-section" id="reqSection" hidden>
+      <div class="sec-head">请求（勾选则按勾选导出）</div>
+      <ul id="reqList"></ul>
+    </div>
+
+    <div class="cred-section" id="cookieSection" hidden>
+      <div class="sec-head">Cookie <button class="link" data-copy="cookies">复制全部</button></div>
+      <ul id="cookieList"></ul>
+    </div>
+
+    <div class="cred-section" id="tokenSection" hidden>
+      <div class="sec-head">Token <button class="link" data-copy="tokens">复制全部</button></div>
+      <ul id="tokenList"></ul>
+    </div>
+
+    <div class="exports">
+      <button id="downloadBtn" class="primary">⬇ 下载所选</button>
+      <button id="summaryBtn" class="secondary">下载清单</button>
+    </div>
   </section>
 
-  <section class="exports" id="exports" hidden>
-    <button id="downloadHar" class="secondary">⬇ 下载 HAR</button>
-    <button id="downloadCookies" class="secondary">⬇ 下载 Cookie 列表</button>
-  </section>
-
-  <p class="hint">录制期间请勿关闭浏览器顶部出现的「正在调试」提示条。</p>
+  <p class="hint">录制期间请勿关闭浏览器顶部的「正在调试」提示条。</p>
 
   <script src="popup.js"></script>
 </body>

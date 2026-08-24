@@ -5,6 +5,7 @@ export class HarBuilder {
   constructor() {
     this.entries = new Map(); // requestId -> entry
     this.cookies = new Map(); // "name" -> { name, value, domain }
+    this.tokens = new Map();  // "full" -> { scheme, value, full, domain }
     this.requestCount = 0;
   }
 
@@ -23,6 +24,19 @@ export class HarBuilder {
         if (name && !this.cookies.has(name)) {
           this.cookies.set(name, { name, value, domain: host });
         }
+      }
+    }
+    // 从 Authorization 头提取 token（和 cookie 并列的第二种凭证）
+    for (const h of headers) {
+      const lower = h.name.toLowerCase();
+      if (lower !== 'authorization' && lower !== 'proxy-authorization') continue;
+      const full = String(h.value).trim();
+      if (!full) continue;
+      const sp = full.indexOf(' ');
+      const scheme = sp > 0 ? full.slice(0, sp) : '';
+      const value = sp > 0 ? full.slice(sp + 1).trim() : full;
+      if (!this.tokens.has(full)) {
+        this.tokens.set(full, { scheme, value, full, domain: host });
       }
     }
     const entry = {
@@ -101,8 +115,17 @@ export class HarBuilder {
     };
   }
 
+  // 按原始录制顺序返回 entry 列表（供「仅勾选」过滤用）
+  getEntryList() {
+    return [...this.entries.values()];
+  }
+
   getCookies() {
     return [...this.cookies.values()];
+  }
+
+  getTokens() {
+    return [...this.tokens.values()];
   }
 }
 

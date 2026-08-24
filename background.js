@@ -39,14 +39,15 @@ async function stop() {
 
   const har = builder ? builder.build() : { log: { version: '1.2', entries: [] } };
   const cookies = builder ? builder.getCookies() : [];
+  const tokens = builder ? builder.getTokens() : [];
   const requestCount = builder ? builder.requestCount : 0;
 
   state.recording = false;
   state.builder = null;
   state.tabId = null;
 
-  await chrome.storage.local.set({ recording: false, har, cookies, requestCount, tabId: null });
-  return { ok: true, requestCount, cookieCount: cookies.length };
+  await chrome.storage.local.set({ recording: false, har, cookies, tokens, requestCount, tabId: null });
+  return { ok: true, requestCount, cookieCount: cookies.length, tokenCount: tokens.length };
 }
 
 /* ---------------- CDP 事件 ---------------- */
@@ -93,10 +94,19 @@ function toBase64(str) {
   return btoa(binary);
 }
 
-async function downloadHar() {
+async function downloadHar(indices) {
   const { har } = await chrome.storage.local.get('har');
   if (!har) return { ok: false, error: '暂无录制结果，请先录制' };
-  const json = JSON.stringify(har, null, 2);
+  let out = har;
+  if (Array.isArray(indices) && indices.length) {
+    out = {
+      log: {
+        ...har.log,
+        entries: indices.map((i) => har.log.entries[i]).filter(Boolean),
+      },
+    };
+  }
+  const json = JSON.stringify(out, null, 2);
   const dataUrl = 'data:application/json;base64,' + toBase64(json);
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
   await chrome.downloads.download({
@@ -121,6 +131,50 @@ async function downloadCookies() {
   return { ok: true };
 }
 
+async function downloadTokens() {
+  const { tokens } = await chrome.storage.local.get('tokens');
+  if (!tokens?.length) return { ok: false, error: '未捕获到 token' };
+  const text = tokens.map((t) => t.full).join('\n');
+  const dataUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  await chrome.downloads.download({
+    url: dataUrl,
+    filename: `harsnap-tokens-${stamp}.txt`,
+    saveAs: true,
+  });
+  return { ok: true };
+}
+
+async function downloadSummary(format = 'csv') {
+  const { har } = await chrome.storage.local.get('har');
+  if (!har) return { ok: false, error: '暂无录制结果，请先录制' };
+  const rows = har.log.entries.map((e, i) => ({
+    i: i + 1,
+    method: e.request.method,
+    url: e.request.url,
+    status: e.response.status || 0,
+  }));
+  let text;
+  let ext;
+  if (format === 'markdown') {
+    ext = 'md';
+    text = '| # | 方法 | URL | 状态 |\n|---|---|---|---|\n'
+      + rows.map((r) => `| ${r.i} | ${r.method} | ${r.url} | ${r.status} |`).join('\n');
+  } else {
+    ext = 'csv';
+    text = '#,method,url,status\n'
+      + rows.map((r) => `${r.i},"${r.method}","${r.url.replace(/"/g, '""')}",${r.status}`).join('\n');
+  }
+  const dataUrl = 'data:text/plain;charset=utf-8,' + encodeURIComponent(text);
+  const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  await chrome.downloads.download({
+    url: dataUrl,
+    filename: `harsnap-summary-${stamp}.${ext}`,
+    saveAs: true,
+  });
+  return { ok: true };
+}
+
 /* ---------------- 消息路由 ---------------- */
 
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
@@ -133,18 +187,32 @@ chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
         sendResponse(await stop());
         break;
       case 'status': {
-        const s = await chrome.storage.local.get(['recording', 'requestCount', 'cookies']);
+        const s = await chrome.storage.local.get(['recording', 'requestCount', 'cookies', 'tokens', 'har']);
         const recording = state.recording || !!s.recording;
         const requestCount = state.builder ? state.builder.requestCount : (s.requestCount || 0);
         const cookies = state.builder ? state.builder.getCookies() : (s.cookies || []);
-        sendResponse({ recording, requestCount, cookies });
+        const tokens = state.builder ? state.builder.getTokens() : (s.tokens || []);
+        // 请求列表（供「仅勾选」导出），停止后从 storage 的 har 取
+        let requests = [];
+        if (!recording && s.har?.log?.entries) {
+          requests = s.har.log.entries.map((e, i) => ({
+            i, method: e.request.method, url: e.request.url, status: e.response.status || 0,
+          }));
+        }
+        sendResponse({ recording, requestCount, cookies, tokens, requests });
         break;
       }
       case 'downloadHar':
-        sendResponse(await downloadHar());
+        sendResponse(await downloadHar(msg.indices));
         break;
       case 'downloadCookies':
         sendResponse(await downloadCookies());
+        break;
+      case 'downloadTokens':
+        sendResponse(await downloadTokens());
+        break;
+      case 'downloadSummary':
+        sendResponse(await downloadSummary(msg.format));
         break;
       default:
         sendResponse({ ok: false, error: 'unknown message' });

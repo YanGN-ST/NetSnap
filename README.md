@@ -6,8 +6,12 @@
 
 - **一键录制**：点「开始录制」→ 正常登录签到 → 点「停止」，网络请求自动捕获。
 - **不开 DevTools**：走 Chrome DevTools Protocol（chrome.debugger），无需手动 F12、无需勾 Preserve log。
+- **多选导出**：`HAR` / `Cookie` / `Token` 三项独立勾选，勾啥导啥。
 - **导出 HAR 1.2**：标准格式，可直接导入 DailyCheckin / Postman / Charles 等工具回放。
+- **单请求导出**：请求列表可勾选，「仅勾选」模式下只导出勾中的请求（精确复现签到 POST，过滤无关静态资源）。
 - **单独提取 Cookie**：从请求 Cookie 头 + 响应 Set-Cookie 自动提取、去重，列表可一键复制。
+- **单独提取 Token**：从 `Authorization` 头提取 Bearer / Basic 等 token，与 Cookie 并列的第二种凭证。
+- **请求清单摘要**：一键下载 Markdown 表格（方法 + URL + 状态码），快速浏览本次录制。
 - **纯本地**：数据不出本机，无遥测、无后端、无外部请求。
 - **零依赖**：原生 JavaScript + MV3，无构建步骤、无 npm 依赖。
 
@@ -26,8 +30,10 @@
 1. 打开要录制签到的网站，正常登录。
 2. 点 HarSnap 图标 → 「● 开始录制」（浏览器顶部会出现「正在调试」提示条，**不要关**）。
 3. 回到网页，点一次签到按钮。
-4. 再点 HarSnap 图标 → 「■ 停止并导出」。
-5. 查看提取的 Cookie（可单个 / 全部复制），点「下载 HAR」。
+4. 再点 HarSnap 图标 → 「■ 停止」。
+5. 勾选要导出的内容（HAR / Cookie / Token）、选请求范围（全部 / 仅勾选），点「⬇ 下载所选」。
+
+> Token 是从请求的 `Authorization: Bearer xxx` 这类头里提取的——很多站点登录态不在 Cookie 里，而在 token 里。
 
 ## 目录结构
 
