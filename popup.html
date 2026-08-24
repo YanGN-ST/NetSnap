@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header>
+    <div class="brand">HarSnap</div>
+    <div class="sub">一键录 HAR · 抓 Cookie</div>
+  </header>
+
+  <section class="status">
+    <span class="dot" id="dot"></span>
+    <span id="statusText">就绪</span>
+  </section>
+
+  <section class="stats">
+    <div class="stat">
+      <span class="num" id="reqCount">0</span>
+      <span class="lbl">请求</span>
+    </div>
+    <div class="stat">
+      <span class="num" id="cookieCount">0</span>
+      <span class="lbl">Cookie</span>
+    </div>
+  </section>
+
+  <section class="controls">
+    <button id="startBtn" class="primary">● 开始录制</button>
+    <button id="stopBtn" class="danger" hidden>■ 停止并导出</button>
+  </section>
+
+  <section class="cookies" id="cookies" hidden>
+    <div class="cookies-head">
+      <span>捕获的 Cookie</span>
+      <button id="copyAll" class="link">复制全部</button>
+    </div>
+    <ul id="cookieList"></ul>
+  </section>
+
+  <section class="exports" id="exports" hidden>
+    <button id="downloadHar" class="secondary">⬇ 下载 HAR</button>
+    <button id="downloadCookies" class="secondary">⬇ 下载 Cookie 列表</button>
+  </section>
+
+  <p class="hint">录制期间请勿关闭浏览器顶部出现的「正在调试」提示条。</p>
+
+  <script src="popup.js"></script>
+</body>
+</html>
