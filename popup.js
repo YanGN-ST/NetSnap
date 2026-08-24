@@ -34,7 +34,7 @@ function renderRequests(requests) {
     <li>
       <input type="checkbox" class="req-check" data-i="${r.i}" ${r.i === requests.length - 1 ? 'checked' : ''}>
       <span class="req-method ${(r.method || '').toLowerCase()}">${escapeHtml(r.method)}</span>
-      <span class="req-url" title="${escapeHtml(r.url)}">${escapeHtml(shortUrl(r.url))}</span>
+      <span class="req-url" title="${escapeAttr(r.url)}">${escapeHtml(shortUrl(r.url))}</span>
       <span class="req-status ${r.status >= 400 ? 'err' : ''}">${r.status}</span>
     </li>
   `).join('');
@@ -47,7 +47,7 @@ function renderCredential(sectionSel, listSel, items, toFull, toName, toValue) {
   list.innerHTML = items.map((it) => `
     <li>
       <span class="cname">${escapeHtml(toName(it))}</span>
-      <span class="cval" title="${escapeHtml(toFull(it))}">${escapeHtml(toValue(it))}</span>
+      <span class="cval" title="${escapeAttr(toFull(it))}">${escapeHtml(toValue(it))}</span>
       <button class="copy" data-text="${escapeAttr(toFull(it))}" title="复制">⧉</button>
     </li>
   `).join('');

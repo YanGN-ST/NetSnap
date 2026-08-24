@@ -4,7 +4,7 @@
 export class HarBuilder {
   constructor() {
     this.entries = new Map(); // requestId -> entry
-    this.cookies = new Map(); // "name" -> { name, value, domain }
+    this.cookies = new Map(); // "domain\0name" -> { name, value, domain }（跨域同名 cookie 不互相覆盖）
     this.tokens = new Map();  // "full" -> { scheme, value, full, domain }
     this.requestCount = 0;
   }
@@ -13,7 +13,7 @@ export class HarBuilder {
     const { requestId, request, timestamp } = params;
     const headers = toHeaderArray(request.headers || {});
     const host = safeHost(request.url);
-    // 从请求 Cookie 头收集 cookie（去重）
+    // 从请求 Cookie 头收集 cookie（去重，key 含域名避免跨域同名覆盖）
     for (const h of headers) {
       if (h.name.toLowerCase() !== 'cookie') continue;
       for (const part of String(h.value).split(';')) {
@@ -21,8 +21,8 @@ export class HarBuilder {
         if (idx <= 0) continue;
         const name = part.slice(0, idx).trim();
         const value = part.slice(idx + 1).trim();
-        if (name && !this.cookies.has(name)) {
-          this.cookies.set(name, { name, value, domain: host });
+        if (name) {
+          this.cookies.set(host + '\0' + name, { name, value, domain: host });
         }
       }
     }
@@ -85,15 +85,24 @@ export class HarBuilder {
     entry.response.httpVersion = resp.protocol || '';
     entry.response.headers = toHeaderArray(resp.headers || {});
     entry.response.content.mimeType = resp.mimeType || 'x-unknown';
-    // 收集 Set-Cookie
+    // 收集 Set-Cookie（写入 response.cookies 供 HAR 完整，同时去重进全局 cookie 列表）
+    const host = safeHost(entry.request.url);
     for (const [name, value] of Object.entries(resp.headers || {})) {
-      if (name.toLowerCase() === 'set-cookie') {
-        const parsed = parseSetCookie(value);
-        if (parsed && !this.cookies.has(parsed.name)) {
-          this.cookies.set(parsed.name, { ...parsed, domain: safeHost(entry.request.url) });
-        }
+      if (name.toLowerCase() !== 'set-cookie') continue;
+      const parsed = parseSetCookie(value);
+      if (parsed) {
+        entry.response.cookies.push(parsed);
+        this.cookies.set(host + '\0' + parsed.name, { ...parsed, domain: host });
       }
     }
+  }
+
+  onLoadingFailed(params) {
+    const entry = this.entries.get(params.requestId);
+    if (!entry) return;
+    // 请求失败（网络错误/中止）：标记 status = -1，附错误文本
+    entry.response.status = -1;
+    entry.response.statusText = params.errorText || 'Failed';
   }
 
   setResponseBody(requestId, body, base64Encoded = false) {
@@ -113,11 +122,6 @@ export class HarBuilder {
         entries: [...this.entries.values()],
       },
     };
-  }
-
-  // 按原始录制顺序返回 entry 列表（供「仅勾选」过滤用）
-  getEntryList() {
-    return [...this.entries.values()];
   }
 
   getCookies() {

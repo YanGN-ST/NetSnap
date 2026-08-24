@@ -4,6 +4,17 @@ import { HarBuilder } from './har-builder.js';
 
 const state = { tabId: null, builder: null, recording: false };
 
+// worker 启动时清理僵尸状态：若 storage 里 recording 仍为 true 但内存 state 为空
+// （service worker 被休眠/重启，debugger attach 已随之失效），重置 recording 避免 UI 假显示「录制中」且无法停止
+(async () => {
+  try {
+    const s = await chrome.storage.local.get('recording');
+    if (s.recording && !state.recording) {
+      await chrome.storage.local.set({ recording: false, tabId: null });
+    }
+  } catch { /* ignore */ }
+})();
+
 /* ---------------- 录制生命周期 ---------------- */
 
 async function getActiveTabId() {
@@ -19,12 +30,23 @@ async function start() {
   state.builder = new HarBuilder();
   state.recording = true;
 
-  await new Promise((resolve) => {
+  const attachResult = await new Promise((resolve) => {
     chrome.debugger.attach({ tabId }, '1.3', () => {
-      chrome.debugger.sendCommand({ tabId }, 'Network.enable', () => resolve());
+      if (chrome.runtime.lastError) {
+        resolve({ ok: false, error: chrome.runtime.lastError.message });
+        return;
+      }
+      chrome.debugger.sendCommand({ tabId }, 'Network.enable', () => resolve({ ok: true }));
     });
   });
-  await chrome.storage.local.set({ recording: true, tabId, requestCount: 0, cookies: [] });
+  if (!attachResult.ok) {
+    state.tabId = null;
+    state.builder = null;
+    state.recording = false;
+    return { ok: false, error: attachResult.error };
+  }
+
+  await chrome.storage.local.set({ recording: true, tabId, requestCount: 0, cookies: [], tokens: [] });
   return { ok: true, tabId };
 }
 
@@ -59,6 +81,8 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
     state.builder.onRequestWillBeSent(params);
   } else if (method === 'Network.responseReceived') {
     state.builder.onResponseReceived(params);
+  } else if (method === 'Network.loadingFailed') {
+    state.builder.onLoadingFailed(params);
   } else if (method === 'Network.loadingFinished') {
     const requestId = params.requestId;
     chrome.debugger.sendCommand(
@@ -66,7 +90,7 @@ chrome.debugger.onEvent.addListener((source, method, params) => {
       'Network.getResponseBody',
       { requestId },
       (result) => {
-        // 超大响应体会返回 error，忽略即可（headers/status 仍在）
+        if (chrome.runtime.lastError) return; // 超大响应体会拒绝返回 body
         if (result?.body != null) {
           state.builder?.setResponseBody(requestId, result.body, result.base64Encoded);
         }
