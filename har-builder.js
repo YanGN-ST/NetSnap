@@ -131,6 +131,31 @@ export class HarBuilder {
   getTokens() {
     return [...this.tokens.values()];
   }
+
+  // 快照：service worker 休眠/重启前把录制状态持久化用（Map → 数组，可 JSON 序列化）
+  snapshot() {
+    return {
+      entries: [...this.entries.entries()],
+      cookies: [...this.cookies.entries()],
+      tokens: [...this.tokens.entries()],
+      requestCount: this.requestCount,
+    };
+  }
+
+  // 从 snapshot() 恢复；传入非法数据时返回空 builder（不抛错）
+  static restore(snap) {
+    const b = new HarBuilder();
+    if (!snap || typeof snap !== 'object') return b;
+    try {
+      b.entries = new Map(snap.entries || []);
+      b.cookies = new Map(snap.cookies || []);
+      b.tokens = new Map(snap.tokens || []);
+      b.requestCount = snap.requestCount || 0;
+    } catch {
+      return new HarBuilder();
+    }
+    return b;
+  }
 }
 
 function toHeaderArray(obj) {
