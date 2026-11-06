@@ -30,7 +30,7 @@
 ### 克隆与加载
 
 ```bash
-git clone https://github.com/ygnstudio/NetSnap.git
+git clone https://github.com/YanGN-ST/NetSnap.git
 cd NetSnap
 ```
 
@@ -72,4 +72,4 @@ NetSnap 暂无自动化测试。改动请在浏览器里手动验证 HAR 归档�
 
 - Issue 优先：[GitHub Issues](../../issues)
 - 小红书私信：[YanGN 的主页](https://www.xiaohongshu.com/user/profile/66a7e7ae000000001d023641)
-- GitHub 主页：<https://github.com/ygnstudio>
+- GitHub 主页：<https://github.com/YanGN-ST>
